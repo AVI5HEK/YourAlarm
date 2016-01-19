@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Alarm</string>
+    <string name="title_activity_set_alarm">Set Alarm</string>
+    <string name="edit_label">Label </string>
+    <string name="action_done">Done</string>
+    <string name="toggle_sun">SUN</string>
+    <string name="toggle_mon">MON</string>
+    <string name="toggle_tue">TUE</string>
+    <string name="toggle_wed">WED</string>
+    <string name="toggle_thu">THU</string>
+    <string name="toggle_fri">FRI</string>
+    <string name="toggle_sat">SAT</string>
+    <string name="alarm_tone_picker_msg">You haven\'t picked any ringtone!</string>
+    <string name="alarm_tone_picker_error_msg">Something went wrong!</string>
+    <string name="content_description_delete_alarm">Delete alarm</string>
+    <string name="content_description_ringtone">Pick ringtone</string>
+</resources>
