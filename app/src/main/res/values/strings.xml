@@ -14,4 +14,9 @@
     <string name="alarm_tone_picker_error_msg">Something went wrong!</string>
     <string name="content_description_delete_alarm">Delete alarm</string>
     <string name="content_description_ringtone">Pick ringtone</string>
+    <string name="delete_alarm_dialog_title">Delete alarm</string>
+    <string name="delete_alarm_dialog_message">Want to delete this alarm?</string>
+    <string name="delete_alarm_dialog_button_cancel">Cancel</string>
+    <string name="delete_alarm_dialog_button_yes">Yes</string>
+    <string name="title_activity_ring_alarm">Alarm Ringing</string>
 </resources>

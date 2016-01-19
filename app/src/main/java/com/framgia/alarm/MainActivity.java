@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(getApplicationContext(), SetAlarmActivity.class)
-                        .putExtra(Constants.ID, Constants.OFF));
+                        .putExtra(Constants.ID, Constants.NEW_ALARM));
             }
         });
     }
@@ -38,9 +38,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         mDb = new DatabaseHelper(getApplicationContext());
-        mDb.closeDB();
         AlarmListAdapter mAdapter = new AlarmListAdapter(this, mDb.getAlarms());
         mListView.setAdapter(mAdapter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mDb.closeDB();
     }
 
     private void mSetUpToolbar() {

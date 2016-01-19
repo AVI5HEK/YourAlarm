@@ -125,7 +125,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:contentDescription="@string/content_description_ringtone"
-            android:src="@drawable/ic_music_note_grey600_18dp"/>
+            android:src="@drawable/ic_music_note_grey600"/>
 
         <TextView
             android:id="@+id/text_ringtone"

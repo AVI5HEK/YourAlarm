@@ -18,6 +18,7 @@ import com.framgia.alarm.model.Alarm;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by avishek on 1/18/16.
@@ -58,23 +59,25 @@ public class AlarmListAdapter extends BaseAdapter {
             holder.time = (TextView) convertView.findViewById(R.id.text_time);
             holder.status = (ToggleButton) convertView.findViewById(R.id.toggle_on_off);
             holder.label = (TextView) convertView.findViewById(R.id.text_label);
-            holder.day[0] = (ToggleButton) convertView.findViewById(R.id.toggle_sun);
-            holder.day[1] = (ToggleButton) convertView.findViewById(R.id.toggle_mon);
-            holder.day[2] = (ToggleButton) convertView.findViewById(R.id.toggle_tue);
-            holder.day[3] = (ToggleButton) convertView.findViewById(R.id.toggle_wed);
-            holder.day[4] = (ToggleButton) convertView.findViewById(R.id.toggle_thu);
-            holder.day[5] = (ToggleButton) convertView.findViewById(R.id.toggle_fri);
-            holder.day[6] = (ToggleButton) convertView.findViewById(R.id.toggle_sat);
+            holder.day[Constants.INT_ZERO] = (ToggleButton) convertView.findViewById(R.id.toggle_sun);
+            holder.day[Constants.INT_ONE] = (ToggleButton) convertView.findViewById(R.id.toggle_mon);
+            holder.day[Constants.INT_TWO] = (ToggleButton) convertView.findViewById(R.id
+                    .toggle_tue);
+            holder.day[Constants.INT_THREE] = (ToggleButton) convertView.findViewById(R.id.toggle_wed);
+            holder.day[Constants.INT_FOUR] = (ToggleButton) convertView.findViewById(R.id.toggle_thu);
+            holder.day[Constants.INT_FIVE] = (ToggleButton) convertView.findViewById(R.id.toggle_fri);
+            holder.day[Constants.INT_SIX] = (ToggleButton) convertView.findViewById(R.id.toggle_sat);
             holder.ringtone = (TextView) convertView.findViewById(R.id.text_ringtone);
             Date date = new Date(getItem(position).getmTime());
-            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
+            SimpleDateFormat formatter = new SimpleDateFormat(Constants.HOUR_MINUTE, Locale.US);
             String dateFormatted = formatter.format(date);
             holder.time.setText(dateFormatted);
             if (getItem(position).getmStatus() == Constants.ON) holder.status.setChecked(true);
-            holder.label.setText(getItem(position).getmLabel().toString());
+            holder.label.setText(getItem(position).getmLabel());
             for (int i = 0; i < 7; i++) {
-                if ((getItem(position).getmDay_schedule().charAt(i)) == '1') holder.day[i]
-                        .setChecked(true);
+                if ((getItem(position).getmDay_schedule().charAt(i)) == Integer.toString
+                        (Constants.ON).charAt(Constants.INT_ZERO))
+                    holder.day[i].setChecked(true);
             }
             holder.ringtone.setText(RingtoneManager.getRingtone(mContext, Uri.parse(getItem(position)
                     .getmAlarm_tone_uri()))

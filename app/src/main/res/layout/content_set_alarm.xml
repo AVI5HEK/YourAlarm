@@ -57,6 +57,7 @@
                 android:layout_width="@dimen/zero_width"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:id="@+id/button_delete_alarm"
                 android:background="@android:color/transparent"
                 android:contentDescription="@string/content_description_delete_alarm"
                 android:src="@android:drawable/ic_menu_delete"/>
@@ -140,11 +141,11 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="wrap_content"
+                android:layout_width="@dimen/zero_width"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:contentDescription="@string/content_description_ringtone"
-                android:src="@drawable/ic_music_note_grey600_18dp"/>
+                android:src="@drawable/ic_music_note_grey600"/>
 
             <Button
                 android:id="@+id/button_tone_picker"
