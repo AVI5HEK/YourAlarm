@@ -47,7 +47,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        this.mContext = context;
     }
 
     @Override
@@ -100,6 +99,39 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         c.close();
         return alarms;
+    }
+
+    //get single row
+    public Alarm getAlarmById(int id) {
+        String query = "SELECT * FROM " + TABLE_ALARM + " WHERE " + COLUMN_ID + " = " + id;
+        Cursor c = this.getReadableDatabase().rawQuery(query, null);
+        c.moveToFirst();
+        Alarm alarm = new Alarm(c.getInt(c.getColumnIndex(COLUMN_ID)),
+                c.getLong(c.getColumnIndex(COLUMN_TIME)),
+                c.getInt(c.getColumnIndex(COLUMN_STATUS)),
+                c.getString(c.getColumnIndex(COLUMN_LABEL)),
+                c.getString(c.getColumnIndex(COLUMN_ALARM_TONE_URI)),
+                c.getString(c.getColumnIndex(COLUMN_DAY_SCHEDULE)));
+        c.close();
+        return alarm;
+    }
+
+    //update alarm
+    public long updateAlarm(Alarm alarm, int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_TIME, alarm.getmTime());
+        values.put(COLUMN_STATUS, alarm.getmStatus());
+        values.put(COLUMN_LABEL, alarm.getmLabel());
+        values.put(COLUMN_ALARM_TONE_URI, alarm.getmAlarm_tone_uri());
+        values.put(COLUMN_DAY_SCHEDULE, alarm.getmDay_schedule());
+        return db.update(TABLE_ALARM, values, COLUMN_ID + " = " + id, null);
+    }
+
+    //delete alarm
+    public int deleteAlarm(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TABLE_ALARM, COLUMN_ID + " = " + id, null);
     }
 
     public void closeDB() {

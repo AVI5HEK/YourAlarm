@@ -10,8 +10,8 @@ public class Alarm {
     private String mLabel;
     private String mAlarm_tone_uri;
     private String mDay_schedule;
-
-    public Alarm(int mId, long time, int status, String label, String alarm_tone_uri, String day_schedule) {
+    public Alarm(int mId, long time, int status, String label, String alarm_tone_uri, String
+            day_schedule) {
         this.mId = mId;
         this.mTime = time;
         this.mStatus = status;
