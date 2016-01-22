@@ -23,4 +23,10 @@
     <string name="text_activity_main">This is your Alarm app. Press \'+\' button to start
         creating your alarms!</string>
     <string name="menu_add_to_calendar">Add to google calendar</string>
+    <string name="toast_delete_success_message">Successfully deleted event from calendar!</string>
+    <string name="toast_delete_failure_message">Failed to delete event from calendar!</string>
+    <string name="toast_create_success_message">Successfully created event in calendar!</string>
+    <string name="toast_create_failure_message">Failed to create event in calendar!</string>
+    <string name="toast_update_success_message">Successfully updated event in calendar!</string>
+    <string name="toast_update_failure_message">Failed to updated event in calendar!</string>
 </resources>

@@ -22,6 +22,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private SQLiteDatabase mDb;
     // Table name
     private static final String TABLE_ALARM = "alarm";
+    private static final String TABLE_EVENT = "event";
     // column names of alarm table
     /**
      * time
@@ -36,6 +37,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_LABEL = "label";
     private static final String COLUMN_ALARM_TONE_URI = "alarm_tone_uri";
     private static final String COLUMN_DAY_SCHEDULE = "day_schedule";
+    private static final String COLUMN_EVENT_ID = "event_id";
+    // column names of event table
+    /**
+     * event_id
+     * alarm_id
+     */
+    private static final String EVENT_COLUMN_EVENT_ID = "event_id";
+    private static final String EVENT_COLUMN_ALARM_ID = "alarm_id";
+    private static final String EVENT_COLUMN_DAY = "day_of_week";
     //create statement
     private static final String CREATE_TABLE_ALARM = "CREATE TABLE " + TABLE_ALARM
             + "(" + COLUMN_ID + " INTEGER PRIMARY KEY, "
@@ -44,6 +54,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + COLUMN_LABEL + " TEXT, "
             + COLUMN_ALARM_TONE_URI + " TEXT, "
             + COLUMN_DAY_SCHEDULE + " TEXT)";
+    //create statement of event table
+    private static final String CREATE_TABLE_EVENT = "CREATE TABLE " + TABLE_EVENT
+            + "(" + EVENT_COLUMN_EVENT_ID + " INTEGER, "
+            + EVENT_COLUMN_ALARM_ID + " INTEGER "
+            + EVENT_COLUMN_DAY + " INTEGER)";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -52,11 +67,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_TABLE_ALARM);
+        db.execSQL(CREATE_TABLE_EVENT);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ALARM);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENT);
     }
 
     public DatabaseHelper open() throws SQLException {
@@ -132,6 +149,58 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public int deleteAlarm(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete(TABLE_ALARM, COLUMN_ID + " = " + id, null);
+    }
+
+    //create event
+    public long createEvent(int eventId, int alarmId, int dayOfWeek) {
+        ContentValues values = new ContentValues();
+        values.put(EVENT_COLUMN_EVENT_ID, eventId);
+        values.put(EVENT_COLUMN_ALARM_ID, alarmId);
+        values.put(EVENT_COLUMN_DAY, dayOfWeek);
+        return this.getWritableDatabase().insert(TABLE_EVENT, null, values);
+    }
+
+    //get eventId by alarmId
+    public int[] getEventIds(int alarmId) {
+        int[] eventIds = new int[100];
+        String query = "SELECT * FROM " + TABLE_EVENT + " WHERE " + EVENT_COLUMN_ALARM_ID + " = "
+                + alarmId;
+        Cursor c = this.getReadableDatabase().rawQuery(query, null);
+        if (c != null && c.getCount() > 0) {
+            c.moveToFirst();
+            for (int i = 0; i < c.getCount(); i++) {
+                eventIds[i] = c.getInt(c.getColumnIndex(EVENT_COLUMN_EVENT_ID));
+                c.moveToNext();
+            }
+        }
+        if (c != null) {
+            c.close();
+        }
+        return eventIds;
+    }
+
+    //delete alarm
+    public int deleteEvents(int alarmId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TABLE_EVENT, EVENT_COLUMN_ALARM_ID + " = " + alarmId, null);
+    }
+
+    public boolean eventExists(int alarmId) {
+        String query = "SELECT * FROM " + TABLE_EVENT + " WHERE " + EVENT_COLUMN_ALARM_ID + " = "
+                + alarmId;
+        Cursor c = this.getReadableDatabase().rawQuery(query, null);
+        boolean exists = c.getCount() > Constants.INT_ZERO;
+        c.close();
+        return exists;
+    }
+
+    public int getEventDay(int eventId) {
+        String query = "SELECT * FROM " + TABLE_EVENT + " WHERE " + EVENT_COLUMN_EVENT_ID + " = "
+                + eventId;
+        Cursor c = this.getReadableDatabase().rawQuery(query, null);
+        int day = c.getInt(c.getColumnIndex(EVENT_COLUMN_DAY));
+        c.close();
+        return day;
     }
 
     public void closeDB() {
