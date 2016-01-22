@@ -74,11 +74,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     //CRUD methods for alarm table
     public long createAlarm(Alarm alarm) {
         ContentValues values = new ContentValues();
-        values.put(COLUMN_TIME, alarm.getmTime());
-        values.put(COLUMN_STATUS, alarm.getmStatus());
-        values.put(COLUMN_LABEL, alarm.getmLabel());
-        values.put(COLUMN_ALARM_TONE_URI, alarm.getmAlarm_tone_uri());
-        values.put(COLUMN_DAY_SCHEDULE, alarm.getmDay_schedule());
+        values.put(COLUMN_TIME, alarm.getTime());
+        values.put(COLUMN_STATUS, alarm.getStatus());
+        values.put(COLUMN_LABEL, alarm.getLabel());
+        values.put(COLUMN_ALARM_TONE_URI, alarm.getAlarmToneUri());
+        values.put(COLUMN_DAY_SCHEDULE, alarm.getDaySchedule());
         return this.getWritableDatabase().insert(TABLE_ALARM, null, values);
     }
 
@@ -120,11 +120,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public long updateAlarm(Alarm alarm, int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(COLUMN_TIME, alarm.getmTime());
-        values.put(COLUMN_STATUS, alarm.getmStatus());
-        values.put(COLUMN_LABEL, alarm.getmLabel());
-        values.put(COLUMN_ALARM_TONE_URI, alarm.getmAlarm_tone_uri());
-        values.put(COLUMN_DAY_SCHEDULE, alarm.getmDay_schedule());
+        values.put(COLUMN_TIME, alarm.getTime());
+        values.put(COLUMN_STATUS, alarm.getStatus());
+        values.put(COLUMN_LABEL, alarm.getLabel());
+        values.put(COLUMN_ALARM_TONE_URI, alarm.getAlarmToneUri());
+        values.put(COLUMN_DAY_SCHEDULE, alarm.getDaySchedule());
         return db.update(TABLE_ALARM, values, COLUMN_ID + " = " + id, null);
     }
 

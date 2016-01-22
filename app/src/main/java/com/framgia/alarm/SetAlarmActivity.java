@@ -30,7 +30,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-public class SetAlarmActivity extends AppCompatActivity {
+public class SetAlarmActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int RESULT_PICK_TONE = 1;
     private TimePicker mTimePicker;
     private EditText mLabel;
@@ -56,9 +56,16 @@ public class SetAlarmActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         mId = getIntent().getExtras().getInt(Constants.ID);
-        mNewAlarm = (mId == Constants.NEW_ALARM) ? true : false;
+        mNewAlarm = mId == Constants.NEW_ALARM;
         mDb = new DatabaseHelper(getApplicationContext());
-        if (mId > Constants.OFF) mPopulateViews(mDb.getAlarmById(mId));
+        if (!mNewAlarm) mPopulateViews(mDb.getAlarmById(mId));
+        else {
+            mToggleOnOff.setChecked(true);
+            mButtonDeleteAlarm.setVisibility(View.GONE);
+            mButtonTonePicker.setText(RingtoneManager.getRingtone(this, RingtoneManager
+                    .getDefaultUri(RingtoneManager.TYPE_ALARM)).getTitle(this));
+            mToneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM).toString();
+        }
     }
 
     @Override
@@ -90,37 +97,26 @@ public class SetAlarmActivity extends AppCompatActivity {
 
     private void mPopulateViews(Alarm alarm) {
         mTimePicker.setCurrentHour(Integer.parseInt(new SimpleDateFormat("HH", Locale.US).format(new
-                Date(alarm.getmTime()))));
+                Date(alarm.getTime()))));
         mTimePicker.setCurrentMinute(Integer.parseInt(new SimpleDateFormat(Constants.HOUR_MINUTE,
-                Locale.US).format(new Date(alarm.getmTime())).substring(3, 5)));
-        if (alarm.getmStatus() == Constants.ON) mToggleOnOff.setChecked(true);
+                Locale.US).format(new Date(alarm.getTime())).substring(3, 5)));
+        if (alarm.getStatus() == Constants.ON) mToggleOnOff.setChecked(true);
         else mToggleOnOff.setChecked(false);
-        mLabel.setText(alarm.getmLabel());
+        mLabel.setText(alarm.getLabel());
         for (int i = 0; i < 7; i++) {
-            if (alarm.getmDay_schedule().charAt(i) == Integer.toString(Constants.ON).charAt
+            if (alarm.getDaySchedule().charAt(i) == Integer.toString(Constants.ON).charAt
                     (Constants.INT_ZERO)) {
                 mDayOfWeek[i].setChecked(true);
             }
         }
-        mToneUri = alarm.getmAlarm_tone_uri();
+        mToneUri = alarm.getAlarmToneUri();
         mButtonTonePicker.setText(RingtoneManager.getRingtone(this, Uri.parse(mToneUri)).getTitle
                 (this));
     }
 
     private void mSetListeners() {
-        mButtonTonePicker.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivityForResult(new Intent(RingtoneManager.ACTION_RINGTONE_PICKER),
-                        RESULT_PICK_TONE);
-            }
-        });
-        mButtonDeleteAlarm.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mDeleteAlarm();
-            }
-        });
+        mButtonTonePicker.setOnClickListener(this);
+        mButtonDeleteAlarm.setOnClickListener(this);
     }
 
     @Override
@@ -185,8 +181,7 @@ public class SetAlarmActivity extends AppCompatActivity {
         int minute = mTimePicker.getCurrentMinute();
         int status = mToggleOnOff.isChecked() ? Constants.ON : Constants.OFF;
         String label = mLabel.getText().toString();
-        String uri = mToneUri == null ? RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-                .toString() : mToneUri;
+        String uri = mToneUri;
         String daySchedule = Constants.EMPTY_STRING;
         String[] day = new String[7];
         for (int i = 0; i < 7; i++) {
@@ -197,6 +192,8 @@ public class SetAlarmActivity extends AppCompatActivity {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, hour);
         calendar.set(Calendar.MINUTE, minute);
+        calendar.set(Calendar.SECOND, Constants.INT_ZERO);
+        calendar.set(Calendar.MILLISECOND, Constants.INT_ZERO);
         if (mNewAlarm) {
             mId = (int) mDb.createAlarm(new Alarm(calendar.getTimeInMillis(), status, label, uri,
                     daySchedule));
@@ -221,5 +218,25 @@ public class SetAlarmActivity extends AppCompatActivity {
             }
         }
         finish();
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.button_delete_alarm:
+                mDeleteAlarm();
+                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                if (alarmManager != null) {
+                    alarmManager.cancel(PendingIntent.getBroadcast(getApplicationContext(),
+                            mId, new Intent(getApplicationContext(), AlarmReceiver.class),
+                            PendingIntent.FLAG_CANCEL_CURRENT));
+                }
+                break;
+            case R.id.button_tone_picker:
+                startActivityForResult(new Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                        .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager
+                                .TYPE_ALARM), RESULT_PICK_TONE);
+                break;
+        }
     }
 }
