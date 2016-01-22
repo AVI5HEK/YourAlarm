@@ -21,11 +21,7 @@ public class Alarm {
     }
 
     public Alarm(long time, int status, String label, String alarmToneUri, String daySchedule) {
-        this.mTime = time;
-        this.mStatus = status;
-        this.mLabel = label;
-        this.mAlarmToneUri = alarmToneUri;
-        this.mDaySchedule = daySchedule;
+        this(-1, time, status, label, alarmToneUri, daySchedule);
     }
 
     public int getId() {
