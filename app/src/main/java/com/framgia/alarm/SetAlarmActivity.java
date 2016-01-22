@@ -1,12 +1,16 @@
 package com.framgia.alarm;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -22,6 +26,7 @@ import android.widget.ToggleButton;
 
 import com.framgia.alarm.model.Alarm;
 import com.framgia.alarm.utils.AlarmReceiver;
+import com.framgia.alarm.utils.CalenderUtils;
 import com.framgia.alarm.utils.Constants;
 import com.framgia.alarm.utils.DatabaseHelper;
 
@@ -32,6 +37,7 @@ import java.util.Locale;
 
 public class SetAlarmActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int RESULT_PICK_TONE = 1;
+    private static final int REQUEST_PERMISSIONS_REQUEST_READ_WRITE_CALENDAR = 2;
     private TimePicker mTimePicker;
     private EditText mLabel;
     private ToggleButton mToggleOnOff;
@@ -83,6 +89,23 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mDb.deleteAlarm(mId);
+                if (mDb.eventExists(mId)) {
+                    long rowsDeleted;
+                    int[] eventIds = mDb.getEventIds(mId);
+                    boolean success = false;
+                    if (eventIds.length > Constants.INT_ZERO)
+                        for (int i : eventIds) {
+                            if (i > Constants.INT_ZERO) {
+                                rowsDeleted = CalenderUtils.removeCalendarEvent(i,
+                                        getContentResolver());
+                                success = rowsDeleted > Constants.INT_ZERO;
+                            }
+                        }
+                    if (success) {
+                        mDb.deleteEvents(mId);
+                        mShowToast(getString(R.string.toast_delete_success_message));
+                    } else mShowToast(getString(R.string.toast_delete_failure_message));
+                }
                 finish();
             }
         });
@@ -95,11 +118,16 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
         alertDialog.show();
     }
 
+    private void mShowToast(String message) {
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+    }
+
     private void mPopulateViews(Alarm alarm) {
         mTimePicker.setCurrentHour(Integer.parseInt(new SimpleDateFormat("HH", Locale.US).format(new
                 Date(alarm.getTime()))));
         mTimePicker.setCurrentMinute(Integer.parseInt(new SimpleDateFormat(Constants.HOUR_MINUTE,
-                Locale.US).format(new Date(alarm.getTime())).substring(3, 5)));
+                Locale.US).format(new Date(alarm.getTime())).substring(Constants.INT_THREE,
+                Constants.INT_FIVE)));
         if (alarm.getStatus() == Constants.ON) mToggleOnOff.setChecked(true);
         else mToggleOnOff.setChecked(false);
         mLabel.setText(alarm.getLabel());
@@ -171,12 +199,57 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_done)
-            mSetAlarm();
+        if (id == R.id.action_done) {
+            saveAlarm(createAlarm());
+            finish();
+        } else if (id == R.id.action_add_to_google_calendar) {
+            addAlarmToCalendar();
+        }
         return super.onOptionsItemSelected(item);
     }
 
-    private void mSetAlarm() {
+    private void addAlarmToCalendar() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_CALENDAR},
+                    REQUEST_PERMISSIONS_REQUEST_READ_WRITE_CALENDAR);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_CALENDAR},
+                    REQUEST_PERMISSIONS_REQUEST_READ_WRITE_CALENDAR);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[]
+            grantResults) {
+        switch (requestCode) {
+            case REQUEST_PERMISSIONS_REQUEST_READ_WRITE_CALENDAR: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager
+                        .PERMISSION_GRANTED) {
+                    Alarm alarm = createAlarm();
+                    saveAlarm(alarm);
+                    if (mId <= Constants.INT_ZERO) return;
+                    boolean success = false;
+                    for (int i = 0; i < 7; i++) {
+                        if (alarm.getDaySchedule().charAt(i) == Integer.toString(Constants.ON).charAt(0)) {
+                            long eventID = CalenderUtils.addEventToCalender(getContentResolver(), alarm,
+                                    i + Constants.INT_ONE);
+                            success = eventID > Constants.INT_ZERO;
+                            mDb.createEvent((int) eventID, mId);
+                        }
+                    }
+                    if (success) mShowToast(getString(R.string.toast_create_success_message));
+                    else mShowToast(getString(R.string.toast_create_failure_message));
+                    finish();
+                } else {
+                }
+                return;
+            }
+        }
+    }
+
+    private Alarm createAlarm() {
         int hour = mTimePicker.getCurrentHour();
         int minute = mTimePicker.getCurrentMinute();
         int status = mToggleOnOff.isChecked() ? Constants.ON : Constants.OFF;
@@ -194,30 +267,36 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
         calendar.set(Calendar.MINUTE, minute);
         calendar.set(Calendar.SECOND, Constants.INT_ZERO);
         calendar.set(Calendar.MILLISECOND, Constants.INT_ZERO);
+        return new Alarm(calendar.getTimeInMillis(), status, label, uri,
+                daySchedule);
+    }
+
+    private void insertOrUpdateAlarm(Alarm alarm) {
         if (mNewAlarm) {
-            mId = (int) mDb.createAlarm(new Alarm(calendar.getTimeInMillis(), status, label, uri,
-                    daySchedule));
+            mId = (int) mDb.createAlarm(alarm);
         } else {
-            mDb.updateAlarm(new Alarm(calendar.getTimeInMillis(), status, label, uri, daySchedule)
-                    , mId);
+            mDb.updateAlarm(alarm, mId);
         }
+    }
+
+    private void saveAlarm(Alarm alarm) {
+        insertOrUpdateAlarm(alarm);
         Intent intent = new Intent(getApplicationContext(), AlarmReceiver.class);
         intent.putExtra(Constants.ID, mId);
-        intent.putExtra(Constants.LABEL, label);
-        intent.putExtra(Constants.URI, uri);
+        intent.putExtra(Constants.LABEL, alarm.getLabel());
+        intent.putExtra(Constants.URI, alarm.getAlarmToneUri());
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), mId,
                 intent, PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         long interval = Constants.ALARM_INTERVAL;
         if (mToggleOnOff.isChecked()) {
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, alarm.getTime(),
                     interval, pendingIntent);
         } else {
             if (alarmManager != null) {
                 alarmManager.cancel(pendingIntent);
             }
         }
-        finish();
     }
 
     @Override
