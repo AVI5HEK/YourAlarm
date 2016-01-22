@@ -8,47 +8,47 @@ public class Alarm {
     private long mTime;
     private int mStatus;
     private String mLabel;
-    private String mAlarm_tone_uri;
-    private String mDay_schedule;
-    public Alarm(int mId, long time, int status, String label, String alarm_tone_uri, String
-            day_schedule) {
+    private String mAlarmToneUri;
+    private String mDaySchedule;
+    public Alarm(int mId, long time, int status, String label, String alarmToneUri, String
+            daySchedule) {
         this.mId = mId;
         this.mTime = time;
         this.mStatus = status;
         this.mLabel = label;
-        this.mAlarm_tone_uri = alarm_tone_uri;
-        this.mDay_schedule = day_schedule;
+        this.mAlarmToneUri = alarmToneUri;
+        this.mDaySchedule = daySchedule;
     }
 
-    public Alarm(long time, int status, String label, String alarm_tone_uri, String day_schedule) {
+    public Alarm(long time, int status, String label, String alarmToneUri, String daySchedule) {
         this.mTime = time;
         this.mStatus = status;
         this.mLabel = label;
-        this.mAlarm_tone_uri = alarm_tone_uri;
-        this.mDay_schedule = day_schedule;
+        this.mAlarmToneUri = alarmToneUri;
+        this.mDaySchedule = daySchedule;
     }
 
-    public int getmId() {
+    public int getId() {
         return mId;
     }
 
-    public long getmTime() {
+    public long getTime() {
         return mTime;
     }
 
-    public int getmStatus() {
+    public int getStatus() {
         return mStatus;
     }
 
-    public String getmLabel() {
+    public String getLabel() {
         return mLabel;
     }
 
-    public String getmAlarm_tone_uri() {
-        return mAlarm_tone_uri;
+    public String getAlarmToneUri() {
+        return mAlarmToneUri;
     }
 
-    public String getmDay_schedule() {
-        return mDay_schedule;
+    public String getDaySchedule() {
+        return mDaySchedule;
     }
 }

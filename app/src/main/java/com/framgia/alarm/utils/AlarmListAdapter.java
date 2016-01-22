@@ -47,12 +47,12 @@ public class AlarmListAdapter extends BaseAdapter {
 
     @Override
     public long getItemId(int position) {
-        return getItem(position).getmId();
+        return getItem(position).getId();
     }
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
-        ViewHolder holder;
+        final ViewHolder holder;
         if (convertView == null) {
             holder = new ViewHolder();
             convertView = mLayoutInflater.inflate(R.layout.list_alarm, null);
@@ -68,26 +68,45 @@ public class AlarmListAdapter extends BaseAdapter {
             holder.day[Constants.INT_FIVE] = (ToggleButton) convertView.findViewById(R.id.toggle_fri);
             holder.day[Constants.INT_SIX] = (ToggleButton) convertView.findViewById(R.id.toggle_sat);
             holder.ringtone = (TextView) convertView.findViewById(R.id.text_ringtone);
-            Date date = new Date(getItem(position).getmTime());
+            Date date = new Date(getItem(position).getTime());
             SimpleDateFormat formatter = new SimpleDateFormat(Constants.HOUR_MINUTE, Locale.US);
             String dateFormatted = formatter.format(date);
             holder.time.setText(dateFormatted);
-            if (getItem(position).getmStatus() == Constants.ON) holder.status.setChecked(true);
-            holder.label.setText(getItem(position).getmLabel());
+            if (getItem(position).getStatus() == Constants.ON) holder.status.setChecked(true);
+            holder.label.setText(getItem(position).getLabel());
             for (int i = 0; i < 7; i++) {
-                if ((getItem(position).getmDay_schedule().charAt(i)) == Integer.toString
+                if ((getItem(position).getDaySchedule().charAt(i)) == Integer.toString
                         (Constants.ON).charAt(Constants.INT_ZERO))
                     holder.day[i].setChecked(true);
             }
             holder.ringtone.setText(RingtoneManager.getRingtone(mContext, Uri.parse(getItem(position)
-                    .getmAlarm_tone_uri()))
+                    .getAlarmToneUri()))
                     .getTitle(mContext));
             convertView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(mContext, SetAlarmActivity.class);
-                    intent.putExtra(Constants.ID, getItem(position).getmId());
+                    intent.putExtra(Constants.ID, getItem(position).getId());
                     mContext.startActivity(intent);
+                }
+            });
+            holder.status.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int status = holder.status.isChecked() ? Constants.ON : Constants.OFF;
+                    DatabaseHelper db = new DatabaseHelper(mContext);
+                    String daySchedule = Constants.EMPTY_STRING;
+                    for (int i = 0; i < 7; i++) {
+                        daySchedule += holder.day[i].isChecked() ? Integer.toString(Constants.ON) :
+                                Integer.toString(Constants.OFF);
+                    }
+                    db.updateAlarm(new Alarm(
+                            getItem(position).getTime(),
+                            status,
+                            getItem(position).getLabel(),
+                            getItem(position).getAlarmToneUri(),
+                            daySchedule), (int) getItemId(position));
+                    db.closeDB();
                 }
             });
         }

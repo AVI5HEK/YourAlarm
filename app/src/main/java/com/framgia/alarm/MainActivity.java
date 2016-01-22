@@ -9,29 +9,30 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.framgia.alarm.utils.AlarmListAdapter;
 import com.framgia.alarm.utils.Constants;
 import com.framgia.alarm.utils.DatabaseHelper;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private ListView mListView;
     private DatabaseHelper mDb;
+    private TextView mTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mSetUpToolbar();
-        mListView = (ListView) findViewById(R.id.list_alarm);
+        mInitializeViews();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startActivity(new Intent(getApplicationContext(), SetAlarmActivity.class)
-                        .putExtra(Constants.ID, Constants.NEW_ALARM));
-            }
-        });
+        fab.setOnClickListener(this);
+    }
+
+    private void mInitializeViews() {
+        mListView = (ListView) findViewById(R.id.list_alarm);
+        mTextView = (TextView) findViewById(R.id.text_first_time);
     }
 
     @Override
@@ -40,11 +41,14 @@ public class MainActivity extends AppCompatActivity {
         mDb = new DatabaseHelper(getApplicationContext());
         AlarmListAdapter mAdapter = new AlarmListAdapter(this, mDb.getAlarms());
         mListView.setAdapter(mAdapter);
+        if (mListView.getAdapter().getCount() != Constants.INT_ZERO)
+            mTextView.setVisibility(View.GONE);
+        else mTextView.setVisibility(View.VISIBLE);
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
         mDb.closeDB();
     }
 
@@ -63,5 +67,15 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.fab:
+                startActivity(new Intent(getApplicationContext(), SetAlarmActivity.class)
+                        .putExtra(Constants.ID, Constants.NEW_ALARM));
+                break;
+        }
     }
 }
