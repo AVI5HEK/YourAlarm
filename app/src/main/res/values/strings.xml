@@ -22,5 +22,5 @@
     <string name="toast_message_ring_alarm_activity">Hold button to cancel alarm</string>
     <string name="text_activity_main">This is your Alarm app. Press \'+\' button to start
         creating your alarms!</string>
-    <string name="menu_add_to_calendar">Add to google calendar</string>
+    <string name="menu_set_alarm_add_to_calendar">Add to google calendar</string>
 </resources>

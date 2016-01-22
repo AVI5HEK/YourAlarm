@@ -8,7 +8,6 @@
         app:showAsAction="always"/>
     <item
         android:id="@+id/action_add_to_google_calendar"
-        android:title="@string/menu_add_to_calendar"
-        android:icon="@android:drawable/ic_menu_my_calendar"
-        app:showAsAction="ifRoom"/>
+        android:title="@string/menu_set_alarm_add_to_calendar"
+        app:showAsAction="always"/>
 </menu>

@@ -6,7 +6,6 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -25,7 +24,6 @@ public class RingAlarmActivity extends AppCompatActivity implements View.OnClick
     private TextView mTime, mLabel;
     private Button mButtonCancel;
     private MediaPlayer mMediaPlayer;
-    private Vibrator mVibrator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +45,6 @@ public class RingAlarmActivity extends AppCompatActivity implements View.OnClick
     }
 
     private void mPlayRingtone() throws IOException {
-        mVibrator = (Vibrator) getApplicationContext().getSystemService(Context
-                .VIBRATOR_SERVICE);
-        mVibrator.vibrate(Constants.VIBRATOR_TIME);
         Uri uri = Uri.parse(getIntent().getExtras().getString(Constants.URI));
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setDataSource(this, uri);
@@ -79,7 +74,6 @@ public class RingAlarmActivity extends AppCompatActivity implements View.OnClick
     public boolean onLongClick(View v) {
         if (v.getId() == R.id.button_dismiss) {
             mMediaPlayer.stop();
-            mVibrator.cancel();
             Intent homeIntent = new Intent(Intent.ACTION_MAIN);
             homeIntent.addCategory(Intent.CATEGORY_HOME);
             homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

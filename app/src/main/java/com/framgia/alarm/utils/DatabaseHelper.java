@@ -22,6 +22,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private SQLiteDatabase mDb;
     // Table name
     private static final String TABLE_ALARM = "alarm";
+    private static final String TABLE_EVENT = "event";
     // column names of alarm table
     /**
      * time
@@ -36,7 +37,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_LABEL = "label";
     private static final String COLUMN_ALARM_TONE_URI = "alarm_tone_uri";
     private static final String COLUMN_DAY_SCHEDULE = "day_schedule";
-    //create statement
+    // column names of event table
+    /**
+     * event_id
+     * alarm_id
+     */
+    private static final String EVENT_COLUMN_EVENT_ID = "event_id";
+    private static final String EVENT_COLUMN_ALARM_ID = "alarm_id";
+    private static final String EVENT_COLUMN_ACCOUNT = "account";
+    //create statement of alarm table
     private static final String CREATE_TABLE_ALARM = "CREATE TABLE " + TABLE_ALARM
             + "(" + COLUMN_ID + " INTEGER PRIMARY KEY, "
             + COLUMN_TIME + " LONG, "
@@ -44,6 +53,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + COLUMN_LABEL + " TEXT, "
             + COLUMN_ALARM_TONE_URI + " TEXT, "
             + COLUMN_DAY_SCHEDULE + " TEXT)";
+    //create statement of event table
+    private static final String CREATE_TABLE_EVENT = "CREATE TABLE " + TABLE_EVENT
+            + "(" + EVENT_COLUMN_EVENT_ID + " TEXT, "
+            + EVENT_COLUMN_ALARM_ID + " INTEGER, "
+            + EVENT_COLUMN_ACCOUNT + " TEXT)";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -52,11 +66,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_TABLE_ALARM);
+        db.execSQL(CREATE_TABLE_EVENT);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ALARM);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENT);
     }
 
     public DatabaseHelper open() throws SQLException {
@@ -116,6 +132,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return alarm;
     }
 
+    //get last alarm id
+    public int getLastAlarmId() {
+        String query = "SELECT * FROM " + TABLE_ALARM;
+        Cursor c = mDb.rawQuery(query, null);
+        if (c.getCount() > 0) {
+            c.moveToLast();
+            int lastAlarmId = c.getInt(c.getColumnIndex(COLUMN_ID));
+            c.close();
+            return lastAlarmId;
+        } else return Constants.INT_ZERO;
+    }
+
     //update alarm
     public long updateAlarm(Alarm alarm, int id) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -132,6 +160,60 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public int deleteAlarm(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete(TABLE_ALARM, COLUMN_ID + " = " + id, null);
+    }
+
+    //create event
+    public long createEvent(String eventId, int alarmId, String account) {
+        ContentValues values = new ContentValues();
+        values.put(EVENT_COLUMN_EVENT_ID, eventId);
+        values.put(EVENT_COLUMN_ALARM_ID, alarmId);
+        values.put(EVENT_COLUMN_ACCOUNT, account);
+        return this.getWritableDatabase().insert(TABLE_EVENT, null, values);
+    }
+
+    public boolean eventExists(int alarmId) {
+        String query = "SELECT * FROM " + TABLE_EVENT + " WHERE " + EVENT_COLUMN_ALARM_ID + " = "
+                + alarmId;
+        Cursor c = this.getReadableDatabase().rawQuery(query, null);
+        boolean exists = c.getCount() > Constants.INT_ZERO;
+        c.close();
+        return exists;
+    }
+
+    public ArrayList<com.framgia.alarm.model.Event> getEvent(int alarmId) {
+        ArrayList<com.framgia.alarm.model.Event> events = new ArrayList<>();
+        String query = "SELECT * FROM " + TABLE_EVENT + " WHERE " + EVENT_COLUMN_ALARM_ID + " = "
+                + alarmId;
+        Cursor c = mDb.rawQuery(query, null);
+        if (c != null && c.getCount() > 0) {
+            c.moveToFirst();
+            for (int i = 0; i < c.getCount(); i++) {
+                events.add(new com.framgia.alarm.model.Event(c.getString(c.getColumnIndex
+                        (EVENT_COLUMN_EVENT_ID)),
+                        c.getInt(c.getColumnIndex(EVENT_COLUMN_ALARM_ID)),
+                        c.getString(c.getColumnIndex(EVENT_COLUMN_ACCOUNT))));
+                c.moveToNext();
+            }
+        }
+        if (c != null) {
+            c.close();
+        }
+        return events;
+    }
+
+    //update event
+    public long updateEvent(int eventId, int alarmId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(EVENT_COLUMN_EVENT_ID, eventId);
+        values.put(EVENT_COLUMN_ALARM_ID, alarmId);
+        return db.update(TABLE_EVENT, values, EVENT_COLUMN_ALARM_ID + " = " + eventId, null);
+    }
+
+    //delete event
+    public int deleteEvent(int alarmId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TABLE_EVENT, EVENT_COLUMN_ALARM_ID + " = " + alarmId, null);
     }
 
     public void closeDB() {
