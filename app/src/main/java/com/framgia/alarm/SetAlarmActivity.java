@@ -37,7 +37,7 @@ import java.util.Locale;
 
 public class SetAlarmActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int RESULT_PICK_TONE = 1;
-    private static final int REQUEST_PERMISSIONS_REQUEST_READ_WRITE_CALENDAR = 2;
+    private static final int REQUEST_PERMISSIONS_CALENDAR = 2;
     private TimePicker mTimePicker;
     private EditText mLabel;
     private ToggleButton mToggleOnOff;
@@ -72,6 +72,15 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
                     .getDefaultUri(RingtoneManager.TYPE_ALARM)).getTitle(this));
             mToneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM).toString();
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_CALENDAR},
+                    REQUEST_PERMISSIONS_CALENDAR);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_CALENDAR},
+                    REQUEST_PERMISSIONS_CALENDAR);
+        }
     }
 
     @Override
@@ -80,7 +89,7 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
         mDb.closeDB();
     }
 
-    private void mDeleteAlarm() {
+    private void mDeleteAlarmDialog() {
         AlertDialog alertDialog = new AlertDialog.Builder(SetAlarmActivity.this).create();
         alertDialog.setTitle(getString(R.string.delete_alarm_dialog_title));
         alertDialog.setMessage(getString(R.string.delete_alarm_dialog_message));
@@ -88,23 +97,12 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
                 .delete_alarm_dialog_button_yes), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                mDb.deleteAlarm(mId);
-                if (mDb.eventExists(mId)) {
-                    long rowsDeleted;
-                    int[] eventIds = mDb.getEventIds(mId);
-                    boolean success = false;
-                    if (eventIds.length > Constants.INT_ZERO)
-                        for (int i : eventIds) {
-                            if (i > Constants.INT_ZERO) {
-                                rowsDeleted = CalenderUtils.removeCalendarEvent(i,
-                                        getContentResolver());
-                                success = rowsDeleted > Constants.INT_ZERO;
-                            }
-                        }
-                    if (success) {
-                        mDb.deleteEvents(mId);
-                        mShowToast(getString(R.string.toast_delete_success_message));
-                    } else mShowToast(getString(R.string.toast_delete_failure_message));
+                deleteAlarm();
+                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                if (alarmManager != null) {
+                    alarmManager.cancel(PendingIntent.getBroadcast(getApplicationContext(),
+                            mId, new Intent(getApplicationContext(), AlarmReceiver.class),
+                            PendingIntent.FLAG_CANCEL_CURRENT));
                 }
                 finish();
             }
@@ -116,6 +114,13 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
             }
         });
         alertDialog.show();
+    }
+
+    private void deleteAlarm() {
+        mDb.deleteAlarm(mId);
+        if (mDb.eventExists(mId)) {
+            deleteEventsFromCalendar();
+        }
     }
 
     private void mShowToast(String message) {
@@ -201,52 +206,86 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
         int id = item.getItemId();
         if (id == R.id.action_done) {
             saveAlarm(createAlarm());
+            if (mDb.eventExists(mId)) updateEventInCalendar();
             finish();
         } else if (id == R.id.action_add_to_google_calendar) {
-            addAlarmToCalendar();
+            if (mDb.eventExists(mId)) updateEventInCalendar();
+            else addAlarmToCalendar();
+            finish();
         }
         return super.onOptionsItemSelected(item);
     }
 
     private void addAlarmToCalendar() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_CALENDAR},
-                    REQUEST_PERMISSIONS_REQUEST_READ_WRITE_CALENDAR);
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_CALENDAR},
-                    REQUEST_PERMISSIONS_REQUEST_READ_WRITE_CALENDAR);
-        }
+        if (saveEvent()) {
+            mShowToast(getString(R.string.toast_create_success_message));
+        } else mShowToast(getString(R.string.toast_create_failure_message));
+    }
+
+    private void deleteEventsFromCalendar() {
+        if (deleteEvents()) {
+            mDb.deleteEvents(mId);
+            mShowToast(getString(R.string.toast_delete_success_message));
+        } else mShowToast(getString(R.string.toast_delete_failure_message));
+    }
+
+    private void updateEventInCalendar() {
+        if (saveUpdatedEvent()) {
+            mShowToast(getString(R.string.toast_update_success_message));
+        } else mShowToast(getString(R.string.toast_update_failure_message));
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[]
             grantResults) {
         switch (requestCode) {
-            case REQUEST_PERMISSIONS_REQUEST_READ_WRITE_CALENDAR: {
+            case REQUEST_PERMISSIONS_CALENDAR: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager
                         .PERMISSION_GRANTED) {
-                    Alarm alarm = createAlarm();
-                    saveAlarm(alarm);
-                    if (mId <= Constants.INT_ZERO) return;
-                    boolean success = false;
-                    for (int i = 0; i < 7; i++) {
-                        if (alarm.getDaySchedule().charAt(i) == Integer.toString(Constants.ON).charAt(0)) {
-                            long eventID = CalenderUtils.addEventToCalender(getContentResolver(), alarm,
-                                    i + Constants.INT_ONE);
-                            success = eventID > Constants.INT_ZERO;
-                            mDb.createEvent((int) eventID, mId);
-                        }
-                    }
-                    if (success) mShowToast(getString(R.string.toast_create_success_message));
-                    else mShowToast(getString(R.string.toast_create_failure_message));
-                    finish();
-                } else {
                 }
                 return;
             }
         }
+    }
+
+    private boolean saveEvent() {
+        Alarm alarm = createAlarm();
+        saveAlarm(alarm);
+        boolean success = false;
+        for (int i = 0; i < 7; i++) {
+            if (alarm.getDaySchedule().charAt(i) == Integer.toString(Constants.ON).charAt(0)) {
+                long eventID = CalenderUtils.addEventToCalender(getContentResolver(), alarm,
+                        i + Constants.INT_ONE);
+                success = eventID > Constants.INT_ZERO;
+                if (success) mDb.createEvent((int) eventID, mId);
+            }
+        }
+        return success;
+    }
+
+    private boolean saveUpdatedEvent() {
+        boolean success = false;
+        if (deleteEvents()) {
+            mDb.deleteEvents(mId);
+            if (saveEvent())
+                success = true;
+        }
+        return success;
+    }
+
+    private boolean deleteEvents() {
+        long rowsDeleted;
+        int[] eventIds = mDb.getEventIds(mId);
+        boolean success = false;
+        if (eventIds.length > Constants.INT_ZERO)
+            for (int eventId : eventIds) {
+                if (eventId > Constants.INT_ZERO) {
+                    rowsDeleted = CalenderUtils.removeCalendarEvent(eventId,
+                            getContentResolver());
+                    success = rowsDeleted > Constants.INT_ZERO;
+                }
+            }
+        return success;
     }
 
     private Alarm createAlarm() {
@@ -274,9 +313,7 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
     private void insertOrUpdateAlarm(Alarm alarm) {
         if (mNewAlarm) {
             mId = (int) mDb.createAlarm(alarm);
-        } else {
-            mDb.updateAlarm(alarm, mId);
-        }
+        } else mDb.updateAlarm(alarm, mId);
     }
 
     private void saveAlarm(Alarm alarm) {
@@ -303,13 +340,7 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.button_delete_alarm:
-                mDeleteAlarm();
-                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                if (alarmManager != null) {
-                    alarmManager.cancel(PendingIntent.getBroadcast(getApplicationContext(),
-                            mId, new Intent(getApplicationContext(), AlarmReceiver.class),
-                            PendingIntent.FLAG_CANCEL_CURRENT));
-                }
+                mDeleteAlarmDialog();
                 break;
             case R.id.button_tone_picker:
                 startActivityForResult(new Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
