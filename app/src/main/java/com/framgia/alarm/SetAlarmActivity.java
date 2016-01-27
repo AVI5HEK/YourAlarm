@@ -9,6 +9,8 @@ import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -37,7 +39,9 @@ import java.util.Locale;
 
 public class SetAlarmActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int RESULT_PICK_TONE = 1;
-    private static final int REQUEST_PERMISSIONS_CALENDAR = 2;
+    private static final int REQUEST_PERMISSIONS_CREATE_EVENT = 3;
+    private static final int REQUEST_PERMISSIONS_DELETE_EVENT = 4;
+    private static final int REQUEST_PERMISSIONS_UPDATE_EVENT = 5;
     private TimePicker mTimePicker;
     private EditText mLabel;
     private ToggleButton mToggleOnOff;
@@ -48,6 +52,7 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
     private boolean mNewAlarm;
     private int mId;
     private DatabaseHelper mDb;
+    private CoordinatorLayout mCoordinatorLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,15 +77,6 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
                     .getDefaultUri(RingtoneManager.TYPE_ALARM)).getTitle(this));
             mToneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM).toString();
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_CALENDAR},
-                    REQUEST_PERMISSIONS_CALENDAR);
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_CALENDAR},
-                    REQUEST_PERMISSIONS_CALENDAR);
-        }
     }
 
     @Override
@@ -98,13 +94,6 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 deleteAlarm();
-                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                if (alarmManager != null) {
-                    alarmManager.cancel(PendingIntent.getBroadcast(getApplicationContext(),
-                            mId, new Intent(getApplicationContext(), AlarmReceiver.class),
-                            PendingIntent.FLAG_CANCEL_CURRENT));
-                }
-                finish();
             }
         });
         alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string
@@ -117,9 +106,27 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void deleteAlarm() {
-        mDb.deleteAlarm(mId);
         if (mDb.eventExists(mId)) {
-            deleteEventsFromCalendar();
+            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED) || (ContextCompat.checkSelfPermission
+                    (this, Manifest.permission.WRITE_CALENDAR)
+                    != PackageManager.PERMISSION_GRANTED)) {
+                requestPermission(REQUEST_PERMISSIONS_DELETE_EVENT);
+                return;
+            } else {
+                deleteEventsFromCalendar();
+                mDb.deleteAlarm(mId);
+                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                if (alarmManager != null) {
+                    alarmManager.cancel(PendingIntent.getBroadcast(getApplicationContext(),
+                            mId, new Intent(getApplicationContext(), AlarmReceiver.class),
+                            PendingIntent.FLAG_CANCEL_CURRENT));
+                }
+                finish();
+            }
+        } else {
+            mDb.deleteAlarm(mId);
+            finish();
         }
     }
 
@@ -187,6 +194,7 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
         mDayOfWeek[Constants.INT_FIVE] = (ToggleButton) findViewById(R.id.toggle_fri);
         mDayOfWeek[Constants.INT_SIX] = (ToggleButton) findViewById(R.id.toggle_sat);
         mButtonDeleteAlarm = (ImageButton) findViewById(R.id.button_delete_alarm);
+        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.main_layout);
     }
 
     private void mSetToolbar() {
@@ -205,15 +213,69 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_done) {
-            saveAlarm(createAlarm());
-            if (mDb.eventExists(mId)) updateEventInCalendar();
-            finish();
+            if (mDb.eventExists(mId)) {
+                if ((ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR)
+                        != PackageManager.PERMISSION_GRANTED) ||
+                        (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR)
+                                != PackageManager.PERMISSION_GRANTED)) {
+                    requestPermission(REQUEST_PERMISSIONS_UPDATE_EVENT);
+                    return false;
+                } else {
+                    updateEventInCalendar();
+                    finish();
+                }
+            } else {
+                saveAlarm(createAlarm());
+                finish();
+            }
         } else if (id == R.id.action_add_to_google_calendar) {
-            if (mDb.eventExists(mId)) updateEventInCalendar();
-            else addAlarmToCalendar();
-            finish();
+            if (mDb.eventExists(mId)) {
+                if ((ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR)
+                        != PackageManager.PERMISSION_GRANTED) ||
+                        (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR)
+                                != PackageManager.PERMISSION_GRANTED)) {
+                    requestPermission(REQUEST_PERMISSIONS_UPDATE_EVENT);
+                    return false;
+                } else {
+                    updateEventInCalendar();
+                    finish();
+                }
+            } else {
+                if ((ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR)
+                        != PackageManager.PERMISSION_GRANTED) ||
+                        (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALENDAR)
+                                != PackageManager.PERMISSION_GRANTED)) {
+                    requestPermission(REQUEST_PERMISSIONS_CREATE_EVENT);
+                } else {
+                    addAlarmToCalendar();
+                    finish();
+                }
+            }
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void requestPermission(final int requestCode) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(SetAlarmActivity.this,
+                Manifest.permission.READ_CALENDAR) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(SetAlarmActivity.this,
+                        Manifest.permission.WRITE_CALENDAR)) {
+            Snackbar.make(mCoordinatorLayout, R.string.toast_permission_calendar_rationale,
+                    Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.action_ok, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            ActivityCompat.requestPermissions(SetAlarmActivity.this,
+                                    new String[]{Manifest.permission.READ_CALENDAR, Manifest.permission
+                                            .WRITE_CALENDAR}, requestCode);
+                        }
+                    })
+                    .show();
+        } else {
+            ActivityCompat.requestPermissions(SetAlarmActivity.this,
+                    new String[]{Manifest.permission.READ_CALENDAR, Manifest.permission
+                            .WRITE_CALENDAR}, requestCode);
+        }
     }
 
     private void addAlarmToCalendar() {
@@ -239,11 +301,36 @@ public class SetAlarmActivity extends AppCompatActivity implements View.OnClickL
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[]
             grantResults) {
         switch (requestCode) {
-            case REQUEST_PERMISSIONS_CALENDAR: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager
-                        .PERMISSION_GRANTED) {
+            case REQUEST_PERMISSIONS_CREATE_EVENT: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    mShowToast(getString(R.string.toast_permission_granted));
+                } else {
+                    mShowToast(getString(R.string.toast_permission_create_message));
                 }
                 return;
+            }
+            case REQUEST_PERMISSIONS_UPDATE_EVENT: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    mShowToast(getString(R.string.toast_permission_granted));
+                } else {
+                    saveAlarm(createAlarm());
+                    finish();
+                    mShowToast(getString(R.string.toast_permission_update_message));
+                }
+                return;
+            }
+            case REQUEST_PERMISSIONS_DELETE_EVENT: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    mShowToast(getString(R.string.toast_permission_granted));
+                } else {
+                    mShowToast(getString(R.string.toast_permission_delete_message));
+                }
             }
         }
     }
