@@ -3,6 +3,7 @@
     <string name="title_activity_set_alarm">Set Alarm</string>
     <string name="edit_label">Label </string>
     <string name="action_done">Done</string>
+    <string name="action_ok">OK</string>
     <string name="toggle_sun">SUN</string>
     <string name="toggle_mon">MON</string>
     <string name="toggle_tue">TUE</string>
@@ -29,4 +30,15 @@
     <string name="toast_create_failure_message">Failed to create event in calendar!</string>
     <string name="toast_update_success_message">Successfully updated event in calendar!</string>
     <string name="toast_update_failure_message">Failed to update event in calendar!</string>
+    <string name="toast_permission_create_message">You cannot add event to calendar unless you
+        allow!</string>
+    <string name="toast_permission_update_message">You cannot update event in calendar unless you
+        allow! Only alarm is updated.</string>
+    <string name="toast_permission_delete_message">You cannot delete event in calendar unless you
+        allow!</string>
+    <string name="toast_permission_calendar_rationale">Please allow app to add/update/delete
+        event(s).</string>
+    <string name="toast_permission_granted">Well done! You\'re good to go!</string>
+    <string name="toast_calendar_select_day">Make sure the alarm is ON and at least one day is
+        selected.</string>
 </resources>

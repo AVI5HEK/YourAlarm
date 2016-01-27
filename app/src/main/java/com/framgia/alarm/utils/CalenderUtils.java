@@ -47,8 +47,8 @@ public class CalenderUtils {
         event.put(EVENT_STATUS, Constants.INT_ONE);
         event.put(HAS_ALARM, Constants.INT_ONE);
         Uri eventUri = cr.insert(Uri.parse(EVENT_URI_STR), event);
-        long eventID = Long.parseLong(eventUri.getLastPathSegment());
-
+        long eventID = Long.parseLong(eventUri != null ? eventUri.getLastPathSegment() : Integer
+                .toString(Constants.INT_ZERO));
         ContentValues reminderValues = new ContentValues();
         reminderValues.put(EVENT_ID, eventID);
         // Default value of the system. Minutes is a integer
@@ -60,8 +60,7 @@ public class CalenderUtils {
     }
 
     public static long removeCalendarEvent(int eventId, ContentResolver resolver) {
-        long rowsDeleted = resolver.delete(ContentUris.withAppendedId(Uri.parse(EVENT_URI_STR),
+        return resolver.delete(ContentUris.withAppendedId(Uri.parse(EVENT_URI_STR),
                 eventId), null, null);
-        return rowsDeleted;
     }
 }

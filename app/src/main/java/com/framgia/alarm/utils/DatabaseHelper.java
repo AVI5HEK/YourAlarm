@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import com.framgia.alarm.model.Alarm;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 /**
@@ -17,9 +16,6 @@ import java.util.ArrayList;
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "ALARM.db";
     private static final int DATABASE_VERSION = 1;
-    private DatabaseHelper mDbHelper;
-    private Context mContext;
-    private SQLiteDatabase mDb;
     // Table name
     private static final String TABLE_ALARM = "alarm";
     private static final String TABLE_EVENT = "event";
@@ -37,7 +33,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_LABEL = "label";
     private static final String COLUMN_ALARM_TONE_URI = "alarm_tone_uri";
     private static final String COLUMN_DAY_SCHEDULE = "day_schedule";
-    private static final String COLUMN_EVENT_ID = "event_id";
     // column names of event table
     /**
      * event_id
@@ -72,18 +67,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ALARM);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENT);
-    }
-
-    public DatabaseHelper open() throws SQLException {
-        mDbHelper = new DatabaseHelper(mContext);
-        mDb = mDbHelper.getWritableDatabase();
-        return this;
-    }
-
-    public void close() {
-        if (mDbHelper != null) {
-            mDbHelper.close();
-        }
     }
 
     //CRUD methods for alarm table
