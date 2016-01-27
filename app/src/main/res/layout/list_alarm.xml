@@ -34,7 +34,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/linear_0"
-        android:hint="@string/edit_label"/>
+        android:hint="@string/edit_label"
+        android:textSize="@dimen/text_label_size"/>
 
     <LinearLayout
         android:id="@+id/linear_2"
@@ -132,6 +133,8 @@
             android:layout_width="@dimen/zero_width"
             android:layout_height="wrap_content"
             android:layout_weight="6"
-            android:background="@android:color/transparent"/>
+            android:gravity="left"
+            android:background="@android:color/transparent"
+            android:textSize="@dimen/text_label_size"/>
     </LinearLayout>
 </RelativeLayout>

@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="com.framgia.alarm.SetAlarmActivity">
+    tools:context="com.framgia.alarm.SetAlarmActivity"
+    android:id="@+id/main_layout">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"

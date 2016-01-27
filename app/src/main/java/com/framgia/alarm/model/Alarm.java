@@ -4,12 +4,12 @@ package com.framgia.alarm.model;
  * Created by avishek on 1/15/16.
  */
 public class Alarm {
-    private int mId;
-    private long mTime;
-    private int mStatus;
-    private String mLabel;
-    private String mAlarmToneUri;
-    private String mDaySchedule;
+    private final int mId;
+    private final long mTime;
+    private final int mStatus;
+    private final String mLabel;
+    private final String mAlarmToneUri;
+    private final String mDaySchedule;
     public Alarm(int mId, long time, int status, String label, String alarmToneUri, String
             daySchedule) {
         this.mId = mId;

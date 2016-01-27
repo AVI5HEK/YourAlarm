@@ -54,10 +54,10 @@
                 android:hint="@string/edit_label"/>
 
             <ImageButton
+                android:id="@+id/button_delete_alarm"
                 android:layout_width="@dimen/zero_width"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:id="@+id/button_delete_alarm"
                 android:background="@android:color/transparent"
                 android:contentDescription="@string/content_description_delete_alarm"
                 android:src="@android:drawable/ic_menu_delete"/>
@@ -152,7 +152,9 @@
                 android:layout_width="@dimen/zero_width"
                 android:layout_height="wrap_content"
                 android:layout_weight="6"
-                android:background="@android:color/transparent"/>
+                android:background="@android:color/transparent"
+                android:gravity="left"
+                android:textSize="@dimen/text_label_size"/>
         </LinearLayout>
     </RelativeLayout>
 </ScrollView>

@@ -24,9 +24,9 @@ import java.util.Locale;
  * Created by avishek on 1/18/16.
  */
 public class AlarmListAdapter extends BaseAdapter {
-    private ArrayList<Alarm> mListItems;
-    private LayoutInflater mLayoutInflater;
-    private Context mContext;
+    private final ArrayList<Alarm> mListItems;
+    private final LayoutInflater mLayoutInflater;
+    private final Context mContext;
 
     public AlarmListAdapter(Context context, ArrayList<Alarm> arrayList) {
         mListItems = arrayList;
@@ -116,6 +116,6 @@ public class AlarmListAdapter extends BaseAdapter {
     private static class ViewHolder {
         TextView time, label, ringtone;
         ToggleButton status;
-        ToggleButton[] day = new ToggleButton[7];
+        final ToggleButton[] day = new ToggleButton[7];
     }
 }
