@@ -7,11 +7,14 @@ public class Constants {
     public static final String ID = "id";
     public static final String LABEL = "label";
     public static final String URI = "uri";
+    public static final String CONTACT = "contact";
     public static final String EMPTY_STRING = "";
     public static final String HOUR_MINUTE = "hh:mm a";
     public static final long ALARM_INTERVAL = 24 * 60 * 60 * 1000;
-    public static final int VIBRATOR_TIME = 2000;
-    public static final long EVENT_LENGTH = 1000 * 60 * 60;
+    public static final long[] PATTERN = {0, 3000, 1000};
+    public static final long EVENT_LENGTH = 60 * 60 * 1000;
+    public static final long COUNTDOWN_START_TIME = 2 * 60 * 1000;
+    public static final long COUNTDOWN_INTERVAL = 1000;
     public static final int OFF = 0;
     public static final int ON = 1;
     public static final int INT_ZERO = 0;

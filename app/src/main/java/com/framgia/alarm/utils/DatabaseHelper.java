@@ -3,12 +3,12 @@ package com.framgia.alarm.utils;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.framgia.alarm.model.Alarm;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 /**
@@ -16,7 +16,7 @@ import java.util.ArrayList;
  */
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "ALARM.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     private DatabaseHelper mDbHelper;
     private Context mContext;
     private SQLiteDatabase mDb;
@@ -30,6 +30,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * label
      * alarm_tone_uri
      * day_schedule
+     * contact
      */
     private static final String COLUMN_ID = "id";
     private static final String COLUMN_TIME = "time";
@@ -37,7 +38,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_LABEL = "label";
     private static final String COLUMN_ALARM_TONE_URI = "alarm_tone_uri";
     private static final String COLUMN_DAY_SCHEDULE = "day_schedule";
-    private static final String COLUMN_EVENT_ID = "event_id";
+    private static final String COLUMN_CONTACT = "contact";
     // column names of event table
     /**
      * event_id
@@ -52,7 +53,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + COLUMN_STATUS + " INTEGER, "
             + COLUMN_LABEL + " TEXT, "
             + COLUMN_ALARM_TONE_URI + " TEXT, "
-            + COLUMN_DAY_SCHEDULE + " TEXT)";
+            + COLUMN_DAY_SCHEDULE + " TEXT, "
+            + COLUMN_CONTACT + " TEXT)";
     //create statement of event table
     private static final String CREATE_TABLE_EVENT = "CREATE TABLE " + TABLE_EVENT
             + "(" + EVENT_COLUMN_EVENT_ID + " INTEGER, "
@@ -72,6 +74,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_ALARM);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENT);
+        onCreate(db);
     }
 
     public DatabaseHelper open() throws SQLException {
@@ -94,6 +97,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_LABEL, alarm.getLabel());
         values.put(COLUMN_ALARM_TONE_URI, alarm.getAlarmToneUri());
         values.put(COLUMN_DAY_SCHEDULE, alarm.getDaySchedule());
+        values.put(COLUMN_CONTACT, alarm.getContact());
         return this.getWritableDatabase().insert(TABLE_ALARM, null, values);
     }
 
@@ -102,15 +106,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ArrayList<Alarm> alarms = new ArrayList<>();
         String query = "SELECT * FROM " + TABLE_ALARM;
         Cursor c = this.getReadableDatabase().rawQuery(query, null);
-        if (c.moveToFirst()) {
-            do {
-                alarms.add(new Alarm(c.getInt(c.getColumnIndex(COLUMN_ID)),
-                        c.getLong(c.getColumnIndex(COLUMN_TIME)),
-                        c.getInt(c.getColumnIndex(COLUMN_STATUS)),
-                        c.getString(c.getColumnIndex(COLUMN_LABEL)),
-                        c.getString(c.getColumnIndex(COLUMN_ALARM_TONE_URI)),
-                        c.getString(c.getColumnIndex(COLUMN_DAY_SCHEDULE))));
-            } while (c.moveToNext());
+        if (c != null && c.getCount() > 0) {
+            if (c.moveToFirst()) {
+                do {
+                    alarms.add(new Alarm(c.getInt(c.getColumnIndex(COLUMN_ID)),
+                            c.getLong(c.getColumnIndex(COLUMN_TIME)),
+                            c.getInt(c.getColumnIndex(COLUMN_STATUS)),
+                            c.getString(c.getColumnIndex(COLUMN_LABEL)),
+                            c.getString(c.getColumnIndex(COLUMN_ALARM_TONE_URI)),
+                            c.getString(c.getColumnIndex(COLUMN_DAY_SCHEDULE)),
+                            c.getString(c.getColumnIndex(COLUMN_CONTACT))));
+                } while (c.moveToNext());
+            }
         }
         c.close();
         return alarms;
@@ -126,7 +133,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 c.getInt(c.getColumnIndex(COLUMN_STATUS)),
                 c.getString(c.getColumnIndex(COLUMN_LABEL)),
                 c.getString(c.getColumnIndex(COLUMN_ALARM_TONE_URI)),
-                c.getString(c.getColumnIndex(COLUMN_DAY_SCHEDULE)));
+                c.getString(c.getColumnIndex(COLUMN_DAY_SCHEDULE)),
+                c.getString(c.getColumnIndex(COLUMN_CONTACT)));
         c.close();
         return alarm;
     }
@@ -140,6 +148,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_LABEL, alarm.getLabel());
         values.put(COLUMN_ALARM_TONE_URI, alarm.getAlarmToneUri());
         values.put(COLUMN_DAY_SCHEDULE, alarm.getDaySchedule());
+        values.put(COLUMN_CONTACT, alarm.getContact());
         return db.update(TABLE_ALARM, values, COLUMN_ID + " = " + id, null);
     }
 

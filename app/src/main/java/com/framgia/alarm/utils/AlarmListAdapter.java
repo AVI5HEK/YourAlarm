@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -24,9 +26,9 @@ import java.util.Locale;
  * Created by avishek on 1/18/16.
  */
 public class AlarmListAdapter extends BaseAdapter {
-    private ArrayList<Alarm> mListItems;
-    private LayoutInflater mLayoutInflater;
-    private Context mContext;
+    private final ArrayList<Alarm> mListItems;
+    private final LayoutInflater mLayoutInflater;
+    private final Context mContext;
 
     public AlarmListAdapter(Context context, ArrayList<Alarm> arrayList) {
         mListItems = arrayList;
@@ -68,6 +70,8 @@ public class AlarmListAdapter extends BaseAdapter {
             holder.day[Constants.INT_FIVE] = (ToggleButton) convertView.findViewById(R.id.toggle_fri);
             holder.day[Constants.INT_SIX] = (ToggleButton) convertView.findViewById(R.id.toggle_sat);
             holder.ringtone = (TextView) convertView.findViewById(R.id.text_ringtone);
+            holder.contact = (TextView) convertView.findViewById(R.id.text_contact);
+            holder.linearLayout = (LinearLayout) convertView.findViewById(R.id.linear_4);
             Date date = new Date(getItem(position).getTime());
             SimpleDateFormat formatter = new SimpleDateFormat(Constants.HOUR_MINUTE, Locale.US);
             String dateFormatted = formatter.format(date);
@@ -82,6 +86,9 @@ public class AlarmListAdapter extends BaseAdapter {
             holder.ringtone.setText(RingtoneManager.getRingtone(mContext, Uri.parse(getItem(position)
                     .getAlarmToneUri()))
                     .getTitle(mContext));
+            String contact = getItem(position).getContact();
+            holder.contact.setText(contact);
+            if (TextUtils.isEmpty(contact)) holder.linearLayout.setVisibility(View.GONE);
             convertView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -105,7 +112,8 @@ public class AlarmListAdapter extends BaseAdapter {
                             status,
                             getItem(position).getLabel(),
                             getItem(position).getAlarmToneUri(),
-                            daySchedule), (int) getItemId(position));
+                            daySchedule,
+                            getItem(position).getContact()), (int) getItemId(position));
                     db.closeDB();
                 }
             });
@@ -114,8 +122,9 @@ public class AlarmListAdapter extends BaseAdapter {
     }
 
     private static class ViewHolder {
-        TextView time, label, ringtone;
+        TextView time, label, ringtone, contact;
         ToggleButton status;
-        ToggleButton[] day = new ToggleButton[7];
+        final ToggleButton[] day = new ToggleButton[7];
+        LinearLayout linearLayout;
     }
 }

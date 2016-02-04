@@ -23,6 +23,8 @@ public class AlarmReceiver extends BroadcastReceiver {
             scheduledIntent.putExtra(Constants.ID, intent.getExtras().getInt(Constants.ID));
             scheduledIntent.putExtra(Constants.LABEL, intent.getExtras().getString(Constants.LABEL));
             scheduledIntent.putExtra(Constants.URI, intent.getExtras().getString(Constants.URI));
+            scheduledIntent.putExtra(Constants.CONTACT, intent.getExtras().getString(Constants
+                    .CONTACT));
             context.startActivity(scheduledIntent);
             db.closeDB();
         }

@@ -54,10 +54,10 @@
                 android:hint="@string/edit_label"/>
 
             <ImageButton
+                android:id="@+id/button_delete_alarm"
                 android:layout_width="@dimen/zero_width"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:id="@+id/button_delete_alarm"
                 android:background="@android:color/transparent"
                 android:contentDescription="@string/content_description_delete_alarm"
                 android:src="@android:drawable/ic_menu_delete"/>
@@ -135,6 +135,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/linear_3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/linear_2"
@@ -152,7 +153,41 @@
                 android:layout_width="@dimen/zero_width"
                 android:layout_height="wrap_content"
                 android:layout_weight="6"
-                android:background="@android:color/transparent"/>
+                android:background="@android:color/transparent"
+                android:gravity="start"
+                android:textSize="@dimen/text_label_size"/>
+        </LinearLayout>
+
+        <CheckBox
+            android:id="@+id/check_contact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/linear_3"
+            android:text="@string/radio_contact"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/check_contact"
+            android:orientation="horizontal"
+            android:id="@+id/linear_4">
+
+            <ImageView
+                android:layout_width="@dimen/zero_width"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:contentDescription="@string/content_description_contact"
+                android:src="@android:drawable/ic_menu_call"/>
+
+            <Button
+                android:id="@+id/button_contact_picker"
+                android:layout_width="@dimen/zero_width"
+                android:layout_height="wrap_content"
+                android:layout_weight="6"
+                android:background="@android:color/transparent"
+                android:gravity="start"
+                android:text="@string/button_pick_contact"
+                android:textSize="@dimen/text_label_size"/>
         </LinearLayout>
     </RelativeLayout>
 </ScrollView>

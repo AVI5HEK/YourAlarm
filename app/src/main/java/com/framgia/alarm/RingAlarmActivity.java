@@ -6,9 +6,11 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -26,6 +28,7 @@ public class RingAlarmActivity extends AppCompatActivity implements View.OnClick
     private Button mButtonCancel;
     private MediaPlayer mMediaPlayer;
     private Vibrator mVibrator;
+    private AlarmCountDownTimer mCountDownTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,14 +45,22 @@ public class RingAlarmActivity extends AppCompatActivity implements View.OnClick
         mTime.setText(new SimpleDateFormat(Constants.HOUR_MINUTE, Locale.US).format(Calendar
                 .getInstance().getTime()));
         mLabel.setText(getIntent().getExtras().getString(Constants.LABEL));
+        mCountDownTimer = new AlarmCountDownTimer(Constants.COUNTDOWN_START_TIME, Constants
+                .COUNTDOWN_INTERVAL);
+        mCountDownTimer.start();
         mButtonCancel.setOnClickListener(this);
         mButtonCancel.setOnLongClickListener(this);
+    }
+
+    private void mCall() {
+        startActivity(new Intent(Intent.ACTION_CALL)
+                .setData(Uri.parse("tel:" + getIntent().getExtras().getString(Constants.CONTACT))));
     }
 
     private void mPlayRingtone() throws IOException {
         mVibrator = (Vibrator) getApplicationContext().getSystemService(Context
                 .VIBRATOR_SERVICE);
-        mVibrator.vibrate(Constants.VIBRATOR_TIME);
+        mVibrator.vibrate(Constants.PATTERN, 0);
         Uri uri = Uri.parse(getIntent().getExtras().getString(Constants.URI));
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setDataSource(this, uri);
@@ -78,8 +89,7 @@ public class RingAlarmActivity extends AppCompatActivity implements View.OnClick
     @Override
     public boolean onLongClick(View v) {
         if (v.getId() == R.id.button_dismiss) {
-            mMediaPlayer.stop();
-            mVibrator.cancel();
+            stopAlarm();
             Intent homeIntent = new Intent(Intent.ACTION_MAIN);
             homeIntent.addCategory(Intent.CATEGORY_HOME);
             homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -87,5 +97,32 @@ public class RingAlarmActivity extends AppCompatActivity implements View.OnClick
             finish();
         }
         return false;
+    }
+
+    private void stopAlarm() {
+        mMediaPlayer.stop();
+        mVibrator.cancel();
+    }
+
+    public class AlarmCountDownTimer extends CountDownTimer {
+
+        public AlarmCountDownTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+
+        }
+
+        @Override
+        public void onFinish() {
+            if (!(TextUtils.isEmpty(getIntent().getExtras().getString
+                    (Constants.CONTACT)))) {
+                stopAlarm();
+                mCall();
+                finish();
+            }
+        }
     }
 }
